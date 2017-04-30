@@ -1,0 +1,171 @@
+package spring.controllers;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import spring.model.Pet;
+import spring.model.User;
+import spring.service.PetService;
+
+@Controller
+public class PetController {
+	
+	private PetService petService;
+	
+	@Autowired(required=true)
+	//@Qualifier(value="petService")
+	public void setPetService(PetService ps){
+		this.petService = ps;
+	}
+		
+	@RequestMapping(value = "/user/pet", method = RequestMethod.GET)
+	public String listPets(Model model,@RequestParam("userId") int userId,
+			@RequestParam("userType") String userType
+			) {
+	
+		System.out.println("In listPets");
+		model.addAttribute("userType",userType);
+		model.addAttribute("userId",userId);
+		model.addAttribute("addPet",true);
+		model.addAttribute("pet", new Pet());
+		model.addAttribute("listPets", this.petService.listPets(userId));
+		
+		return "pet";
+	}
+	
+	//For add and update pet both
+	@RequestMapping(value= "/user/pet/add")
+	public String addPet(Model model, @ModelAttribute("pet") Pet p, 
+			@RequestParam("userType") String userType)
+	{
+		
+		boolean error=false;
+		model.addAttribute("addPet",true);
+		
+		//if(p.getId() == 0){
+			//new pet, add it
+		if(p.getPetSize()=="")
+    	{
+    		model.addAttribute("invalidInput","Error: Pet size cannot be empty");
+    		error=true;
+    	}
+		if(p.getPetType()=="")
+    	{
+    		model.addAttribute("invalidInput","Error: Pet type cannot be empty");
+    		error=true;
+    	}
+		if(p.getPetBreed()=="")
+    	{
+    		model.addAttribute("invalidInput","Error: Pet breed cannot be empty");
+    		error=true;
+    	}
+		if(p.getPetName()=="" && userType.equals("Owner"))
+    	{
+    		model.addAttribute("invalidInput","Error: Pet name cannot be empty");
+    		error=true;
+    	}	
+    	if(!error)
+    	{
+    		if(p.getPetId()>0)
+    		{
+    			System.out.println("Pet id update");
+    			this.petService.updatePet(p);
+    		}
+    		else
+    			error=this.petService.addPet(p);
+    
+    		model.addAttribute("listPets", this.petService.listPets(p.getUserId()));
+    		model.addAttribute("userType",userType);
+    	}
+			/*if(error)
+			{
+				return "invalid-petname";
+			}
+			else
+			{
+				return "register-success";
+			}
+			}else{
+		//	existing pet, call update
+			this.petService.updatePet(p);
+			}
+		*/
+			return "pet";
+			
+	}
+
+/*	@RequestMapping("/user/pet/remove/{petId}/{userId}/{userType}")
+    public String removePet(@PathVariable("petId") int petId,
+    		@PathVariable("userId") int userId,
+    		Model model,
+    		@ModelAttribute("pet")  Pet p,
+    		RedirectAttributes ra){
+		
+		System.out.println("Pet delete");
+	//	model.addAttribute("addPet",true);
+        this.petService.removePet(petId);
+        ra.addAttribute("userId",userId);
+        return "redirect:/user/pet";
+    }
+ 
+    @RequestMapping(value="/user/pet/edit/{petId}/{userId}/{petName}/{petType}/{petBreed}/{petSize}")
+    public String editPet(@PathVariable("petId") int petId,
+    		@PathVariable("userId") int userId, 
+    		@PathVariable("petName") String petName,
+    		@PathVariable("petType") String petType,
+    		@PathVariable("petBreed") String petBreed,
+    		@PathVariable("petSize") String petSize,
+    		Model model,
+    		@ModelAttribute("pet") Pet p)
+	    	{
+		        model.addAttribute("editPet", true);
+		        model.addAttribute("listPets", this.petService.listPets(userId));
+		        model.addAttribute("userId", userId);
+		        model.addAttribute("petName", petName);
+		    
+		        model.addAttribute("petType", petType);
+		        model.addAttribute("petBreed", petBreed);
+		        model.addAttribute("petSize", petSize);
+		        return "pet";
+	    	}
+    
+
+*/
+	
+	@RequestMapping("/user/pet/remove")
+    public String removePet(Model model,
+    		@ModelAttribute("pet")  Pet p,
+    		RedirectAttributes ra){
+		
+		System.out.println("Pet delete");
+	//	model.addAttribute("addPet",true);
+        this.petService.removePet(p.getPetId());
+        ra.addAttribute("userId",p.getUserId());
+        return "redirect:/user/pet";
+    }
+ 
+    @RequestMapping(value="/user/pet/edit",@RequestParam("userType") String userType)
+    public String editPet(Model model,
+    		@ModelAttribute("pet") Pet p)
+	    	{
+    		
+    			System.out.println("Pet Id"+p.getPetId() + "  "+p.getUserId()) ;
+		        model.addAttribute("editPet", true);
+		        model.addAttribute("listPets", this.petService.listPets(p.getPetId()));
+		        model.addAttribute("userId", p.getUserId());
+		        model.addAttribute("petName", p.getPetName());
+		    
+		        model.addAttribute("petType", p.getPetType());
+		        model.addAttribute("petBreed", p.getPetBreed());
+		        model.addAttribute("petSize", p.getPetSize());
+		        return "pet";
+	    	}
+}

@@ -1,0 +1,75 @@
+package spring.model;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+@Entity
+@Table(name="DB1.PET")
+public class Pet {
+	
+	@Id
+	@Column(name="id")
+	@GeneratedValue(strategy=GenerationType.IDENTITY)
+	private int id;
+	
+	private int userId;
+	
+	private String petName;
+	
+	private String petType;
+	
+	private String petBreed;
+	 
+	private String petSize;
+	
+	public int getUserId() 
+	{
+		return userId;
+	}
+
+	public void setUserId(int userId) 
+	{
+		this.userId = userId;
+	}
+
+	public String getPetType() 
+	{
+		return petType;
+	}
+
+	public void setPetType(String type) 
+	{
+		this.petType = type;
+	}
+
+	public String getPetName() 
+	{
+		return petName;
+	}
+
+	public void setPetName(String petName) 
+	{
+		this.petName = petName;
+	}
+
+	public String getPetBreed() {
+		return petBreed;
+	}
+
+	public void setPetBreed(String petBreed) {
+		this.petBreed = petBreed;
+	}
+
+	public String getPetSize() {
+		return petSize;
+	}
+
+	public void setPetSize(String petSize) {
+		this.petSize = petSize;
+	}
+
+}

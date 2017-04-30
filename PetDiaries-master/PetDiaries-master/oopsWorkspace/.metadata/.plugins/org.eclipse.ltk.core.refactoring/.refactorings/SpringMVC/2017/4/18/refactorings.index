@@ -1,0 +1,4 @@
+1493543400135	Rename resource 'Request.jsp'
+1493550028008	Encapsulate field 'ownerLastName'
+1493550033787	Encapsulate field 'caretakerId'
+1493550040131	Encapsulate field 'hours'

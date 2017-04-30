@@ -1,0 +1,6 @@
+0:0:0:0:0:0:0:1 - - [18/Feb/2017:18:08:06 -0700] "GET /SpringMVC HTTP/1.1" 302 - http-bio-8080-exec-1 0
+0:0:0:0:0:0:0:1 - - [18/Feb/2017:18:08:07 -0700] "GET /SpringMVC/ HTTP/1.1" 200 52 http-bio-8080-exec-2 487
+0:0:0:0:0:0:0:1 - - [18/Feb/2017:18:08:07 -0700] "GET /favicon.ico HTTP/1.1" 404 - http-bio-8080-exec-3 0
+0:0:0:0:0:0:0:1 - - [18/Feb/2017:18:08:12 -0700] "GET /SpringMVC/welcome HTTP/1.1" 200 298 http-bio-8080-exec-4 84
+0:0:0:0:0:0:0:1 - - [18/Feb/2017:18:10:29 -0700] "GET /SpringMVC/welcome HTTP/1.1" 200 278 http-bio-8080-exec-1 678
+0:0:0:0:0:0:0:1 - - [18/Feb/2017:18:10:32 -0700] "GET /SpringMVC/welcome HTTP/1.1" 200 278 http-bio-8080-exec-2 2

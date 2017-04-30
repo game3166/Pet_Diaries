@@ -1,0 +1,17 @@
+1492853795290	Rename type 'PersonController'
+1492853849238	Rename type 'PersonDAO'
+1492853872624	Rename type 'PersonDAOImpl'
+1492853941229	Rename type 'Person'
+1492853986443	Rename type 'PersonService'
+1492854047629	Rename compilation unit 'PersonServiceImpl.java'
+1492854284345	Rename resource 'person.jsp'
+1492855721201	Delete element
+1492855809986	Delete element
+1492856887948	Delete element
+1492857023194	Delete elements
+1492857189007	Rename resource 'views'
+1492857828739	Rename compilation unit 'AppConfig.java'
+1492857864229	Rename package 'spring.config'
+1492857878544	Rename compilation unit 'AppInitializer.java'
+1492903500750	Delete element
+1492905534955	Delete element

@@ -1,0 +1,339 @@
+package spring.controllers;
+
+
+import java.util.Date;
+
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import spring.model.User;
+import spring.model.Pet;
+import spring.model.ResetToken;
+import spring.service.ProfileFactoryService;
+import spring.service.UserService;
+import java.util.List;
+@Controller
+public class UserController {
+	
+	private UserService userService;
+	private ProfileFactoryService profileFactoryService;
+	
+	@Autowired(required=true)
+	//@Qualifier(value="userService")
+	public void setUserService(UserService ps){
+		System.out.println("In user controller");
+		this.userService = ps;
+	}
+	
+	@Autowired(required=true)
+	//@Qualifier(value="userService")
+	public void setProfileFactoryService(ProfileFactoryService ps){
+		System.out.println("In profile factory service setup");
+		this.profileFactoryService = ps;
+	}
+		
+	@RequestMapping(value = "/users", method = RequestMethod.GET)
+	public String listUsers(Model model) {
+		System.out.println("In listUsers");
+		model.addAttribute("user", new User());
+		model.addAttribute("listUsers", this.userService.listUsers());
+		return "user";
+	}
+	
+
+	//For add and update user both
+	@RequestMapping(value= "/user/add", method = RequestMethod.POST)
+	public String addUser(@ModelAttribute("user") User p)
+	{
+		
+		boolean error=false;
+		System.out.println("In addUsers"+p.getUsername() +" "+ p.getPassword());
+		//if(p.getId() == 0){
+			//new user, add it
+			error=this.userService.addUser(p);
+			
+			if(error)
+			{
+				return "invalid-username";
+			}
+			else
+			{
+				return "register-success";
+			}
+		//}else{
+			//existing user, call update
+			//this.userService.updateUser(p);
+		//}
+		
+	}
+	
+	@RequestMapping("/remove/{userId}")
+    public String removeUser(@PathVariable("userId") int id){
+		
+        this.userService.removeUser(id);
+        return "redirect:/users";
+    }
+ 
+    @RequestMapping("/edit/{userId}")
+    public String editUser(@PathVariable("userId") int id, Model model){
+        model.addAttribute("user", this.userService.getUserById(id));
+        model.addAttribute("listUsers", this.userService.listUsers());
+        return "user";
+    }
+    
+    @RequestMapping(value = "/redirect", method = RequestMethod.GET)
+    public String redirect() {
+       return "redirect:signUp";
+    }
+   
+    
+    @RequestMapping(value = "/signUp", method = RequestMethod.GET)
+    public String finalPage(@ModelAttribute("user") User p) {
+       return "signup";
+    }
+    
+    @RequestMapping(value = "/login", method = RequestMethod.GET)
+    public String login() {
+       return "redirect:users";
+    }
+    
+    @RequestMapping(value = "/user/goToLogin", method = RequestMethod.GET)
+    public String goToLogin(@ModelAttribute("user") User u) {
+    	
+       return "user";
+    }
+    
+    @RequestMapping(value= "/user/login", method = RequestMethod.POST)
+	public String loginUser(Model model, @ModelAttribute("user") User p){
+    	
+   // 	System.out.println("in login");
+    	boolean retVal=this.userService.validateUser(p);
+		int userId=0;
+    	if(!retVal)
+    	{
+    	//	System.out.println("Doesn't exist");
+    		if(p.getError().equals("Password"))
+    		{
+    			p=this.userService.getUserById(p.getUserId());
+    			if(p.getInvalidLoginAttempts()==3)
+    				return "redirect:/account-locked";
+    			System.out.println("In User Controller, password set");
+    			this.userService.logInvalidAttempt(p);
+    		}
+    		return "redirect:/invalid-login";
+    	}
+    	else
+    	{
+    	//	System.out.println("Exists");
+    		
+    		System.out.println("User Type is" + p.getUserType());
+    		userId=p.getUserId();
+    		model.addAttribute("userId",userId);
+    		model.addAttribute("username",p.getUsername());
+    		model.addAttribute("firstName",p.getFirstName());
+    		p.setLoginTime(new Date());
+    		this.userService.updateUser(p);
+    		if(p.getUserType()=="Admin")
+    		{
+    			return "adminDashboard";
+    		}
+    		else if((p.getUserType()).equals("Owner"))
+    		{
+    			model.addAttribute("petCount",this.userService.getPetCount(userId));
+    			model.addAttribute("contactInfo",this.userService.isContactInfoSet(userId));
+    			return "ownerDashboard";
+    		}
+    		else 
+    		{
+    			
+    			return "caretakerDashboard";
+    		}
+    	}
+		
+	}
+  
+    
+    @RequestMapping(value= "/user/signup", method = RequestMethod.POST)
+  	public String signupUser(Model model, @ModelAttribute("user") User p){
+      	
+     // 	System.out.println("in login");
+    	
+    	if(p.getFirstName()=="" || p.getLastName()=="")
+    	{
+    		model.addAttribute("invalidInput","Error: First and last name cannot be empty");
+    		return "signup";
+    	}
+    	if(p.getUserType()=="")
+    	{
+    		model.addAttribute("invalidInput","Error: User role cannot be empty");
+    		return "signup";
+    	}
+    	if(p.getPassword()=="")
+    	{
+    		model.addAttribute("invalidInput","Error: Password cannot be empty");
+    		return "signup";
+    	}
+    	if(p.getUsername()=="")
+    	{
+    		model.addAttribute("invalidInput","Error: username cannot be empty");
+    		return "signup";
+    	}
+      	boolean retVal=this.userService.addUser(p);
+  		
+      	
+      	if(retVal)
+      	{
+      		model.addAttribute("invalidInput","Error: Username exists");
+      		return "signup";
+      	}
+      	else
+      	{
+      	//	System.out.println("Exists");
+      		int userId=	this.userService.getUserId(p.getUsername());
+      		ResetToken r=new ResetToken();
+      		r.setUserId(userId);
+      		r.setUsername(p.getUsername());
+      		r.setToken(null);
+      		r.setExpiryTime(null);
+      		
+      		this.userService.createInitialTokenEntry(r);
+      		return "redirect:/register-success";
+      	}
+  		
+  	}
+     
+    @RequestMapping(value = "/register-success", method = RequestMethod.GET)
+    public String registeredSuccessfully() {
+       return "registerSuccess";
+    }
+    
+    
+    @RequestMapping(value = "/account-locked", method = RequestMethod.GET)
+    public String displayAccountLockoutError() {
+       return "accountLocked";
+    }
+    
+    @RequestMapping(value = "/invalid-login", method = RequestMethod.GET)
+    public String displayLoginError() {
+       return "loginError";
+    }
+    
+    @RequestMapping(value= "/user/dash", method = RequestMethod.POST)
+   	public String displayDashboard(Model model, 
+   			@ModelAttribute("pet") User u1,
+   			@ModelAttribute("contactInfo") User u2){
+    		User u=null;
+      // 	System.out.println("in login");
+    		if(u1.getUserId()>0)
+    			u = this.userService.getUserById(u1.getUserId());
+    		else if(u2.getUserId()>0)
+    			u = this.userService.getUserById(u2.getUserId());
+       	//	System.out.println("Exists");
+       		System.out.println("User Type is" + u1.getUserType());
+       		
+  
+       		int userId=u.getUserId();
+       		model.addAttribute("userId",userId);
+       		model.addAttribute("username",u.getUsername());
+       		model.addAttribute("firstName",u.getFirstName());
+
+       		if(u.getUserType()=="Admin")
+       		{
+       			return "adminDashboard";
+       		}
+       		else if((u.getUserType()).equals("Owner"))
+       		{
+       			model.addAttribute("petCount",this.userService.getPetCount(userId));
+       			model.addAttribute("contactInfo",this.userService.isContactInfoSet(userId));
+       			return "ownerDashboard";
+       		}
+       		else 
+       		{
+       			
+       			return "caretakerDashboard";
+       		}
+       	}
+    
+	@RequestMapping(value = "/passwordReset/{tokenId}/{username}", method = RequestMethod.GET)
+	public String resetPassword(Model model,
+			@PathVariable("tokenId") String tokenId,
+			@PathVariable("username") String username) {
+		System.out.println("In reset user");
+		
+		int userId=this.userService.getUserId(username);
+		String token=this.userService.getResetToken(username);
+		Date tokenExpiryTime=this.userService.getExpiryDate(username);
+		User u1=this.userService.getUserById(userId);
+		
+		System.out.println(userId + " token="+token + " time="+tokenExpiryTime);
+		Date currentTime=new Date();
+		if(tokenId.equals(token))
+		{
+			if(currentTime.before(tokenExpiryTime))
+			{
+				model.addAttribute("user",u1);
+				model.addAttribute("success",false);
+				return "passwordRecoveryPage";
+			}
+		}
+		
+		return "invalidRecoveryLink";
+	}
+	
+	@RequestMapping(value = "/user/updatePassword", method = RequestMethod.POST)
+	public String updatePassword(Model model, @ModelAttribute("user") User u) {
+		System.out.println("In update password");
+		
+		User temp1=this.userService.getUserById(u.getUserId());
+		Date d=temp1.getLoginTime();
+		
+		u.setLoginTime(d);
+		u.setAccountLocked(false);
+		u.setError(null);
+		u.setInvalidLoginAttempts(0);
+		
+		this.userService.updateUser(u);
+		
+		model.addAttribute("success",true);
+		return "passwordRecoveryPage";
+	}
+	
+	@RequestMapping(value = "/user/suggestedCaretakers", method = RequestMethod.GET)
+	public String listPets(Model model,@RequestParam("userId") int userId) {
+	
+		System.out.println("In suggested caretakers");
+		model.addAttribute("userId",userId);
+		model.addAttribute("user",new User());
+		model.addAttribute("listCaretakers", this.userService.listCaretakers(userId));
+
+		return "suggestedCaretakers";
+	}
+	
+	@RequestMapping(value = "/user/listCaretakers", method = RequestMethod.GET)
+	public String listCaretakers(Model model,
+			@ModelAttribute("user") User p,
+			@RequestParam("userId") int userId,
+			@RequestParam("username") String username,
+			@RequestParam("userType") String userType
+			) {
+	
+		System.out.println("In list caretakers ");
+		model.addAttribute("userId",userId);
+
+		model.addAttribute("listCaretakers", this.userService.listCaretakers(userId));
+
+		return "suggestedCaretakers";
+	}
+	
+	
+	
+}

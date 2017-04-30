@@ -1,0 +1,126 @@
+package spring.model;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+//import spring.model.Person;
+
+@Entity
+@Table(name="Request")
+public class Request {
+	
+   @Id
+   @Column(name="id")
+   @GeneratedValue(strategy=GenerationType.IDENTITY)
+   private int requestId;
+   private int ownerId;
+   private String ownerFirstName;
+   private String ownerLastName;
+   private int caretakerId;
+   private String petName;
+   private String petType;
+   private String petBreed;
+   private String fromDate;
+   private String toDate;
+   private int hours;
+   private String feedback;
+   private boolean validRequest;
+   private int requestState;
+   
+   
+	public String ownerFirstName() {
+		return ownerFirstName;
+	}
+
+	public void setOwnerFirstName(String name) {
+		this.ownerFirstName = name;
+	}
+	
+	
+	
+   
+   
+	public String getPetName() {
+		return petName;
+	}
+
+	public void setPetName(String name) {
+		this.petName = name;
+	}
+	
+	public String getPetType() {
+		return petType;
+	}
+
+	public void setPetType(String type) {
+		this.petType = type;
+	}
+	
+	public String getPetBreed() {
+		return petBreed;
+	}
+
+	public void setPetBreed(String breed) {
+		this.petBreed = breed;
+	}
+	
+	public String getFromDate() {
+		return fromDate;
+	}
+
+	public void setFromDate(String date1) {
+		this.fromDate = date1;
+	}
+	
+	public String getToDate() {
+		return toDate;
+	}   
+
+	public void setToDate(String date2) {
+		this.toDate = date2;
+	}
+	
+	public int getRequestId() {
+		return requestId;
+	}
+
+	public void setRequestId(int id) {
+		this.requestId = id;
+	}
+	
+	public int getOwnerId() {
+		return ownerId;
+	}
+
+	public void setOwnerId(int id) {
+		this.ownerId = id;
+	}
+
+	public String getFeedback() {
+		return feedback;
+	}
+
+	public void setFeedback(String fb) {
+		this.feedback = fb;  
+	}
+	
+	public boolean getValidRequest() {
+		return validRequest;
+	}
+
+	public void setValidRequest(boolean isvalid) {
+		this.validRequest = isvalid;
+	}
+	
+	public int getRequestState() {
+		return requestState;
+	}
+
+	public void setRequestState(int state) {
+		this.requestState = state;
+	}
+
+}
