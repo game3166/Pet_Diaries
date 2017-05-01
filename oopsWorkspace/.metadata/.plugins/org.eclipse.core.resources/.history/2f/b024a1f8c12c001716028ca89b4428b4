@@ -1,0 +1,85 @@
+package spring.model;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+@Entity
+@Table(name="DB1.HISTORY")
+public class History {
+	
+	@Id
+	@Column(name="id")
+	@GeneratedValue(strategy=GenerationType.IDENTITY)
+	private int petId;
+	
+	private int userId;
+	
+	private String petName;
+	
+	private String petType;
+	
+	private String petBreed;
+	 
+	private String petSize;
+	
+	public int getHistoryId()
+	{
+		return this.petId;
+	}
+	
+	public void setHistoryId(int petId)
+	{
+		this.petId=petId; 
+	}
+	
+	public int getUserId() 
+	{
+		return userId;
+	}
+
+	public void setUserId(int userId) 
+	{
+		this.userId = userId;
+	}
+	
+	public String getHistoryType() 
+	{
+		return petType;
+	}
+
+	public void setHistoryType(String type) 
+	{
+		this.petType = type;
+	}
+
+	public String getHistoryName() 
+	{
+		return petName;
+	}
+
+	public void setHistoryName(String petName) 
+	{
+		this.petName = petName;
+	}
+
+	public String getHistoryBreed() {
+		return petBreed;
+	}
+
+	public void setHistoryBreed(String petBreed) {
+		this.petBreed = petBreed;
+	}
+
+	public String getHistorySize() {
+		return petSize;
+	}
+
+	public void setHistorySize(String petSize) {
+		this.petSize = petSize;
+	}
+
+}

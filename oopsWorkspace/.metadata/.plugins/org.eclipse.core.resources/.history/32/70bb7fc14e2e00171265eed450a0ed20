@@ -1,0 +1,249 @@
+package spring.dao;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import org.apache.commons.lang.time.DateUtils;
+
+import java.util.Date;
+import java.util.List;
+
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Repository;
+
+
+import spring.model.AdminProfile;
+import spring.model.Pet;
+import spring.model.User;
+
+@Repository
+public class AdminProfileDAOImpl implements AdminProfileDAO {
+	
+	private static final Logger logger = LoggerFactory.getLogger(AdminProfileDAOImpl.class);
+
+	private SessionFactory sessionFactory;
+	
+	public void setSessionFactory(SessionFactory sf){
+		this.sessionFactory = sf;
+	}
+
+	@Override
+	public boolean addAdminProfile(AdminProfile p) {
+		boolean error=false;
+		Session session = this.sessionFactory.getCurrentSession();
+		
+		try
+		{
+			session.save(p);
+			//tx.commit();
+			System.out.println("AdminProfile DAO Impl Added adminProfile without exceptions");
+		}
+		catch(Exception e)
+		{
+			session.clear();
+			System.out.println(e.getCause());
+			error=true;
+		}
+		
+		return error;
+		
+	//	logger.info("AdminProfile saved successfully, AdminProfile Details="+p);
+	}
+
+	@Override
+	public void updateAdminProfile(AdminProfile p) {
+		Session session = this.sessionFactory.getCurrentSession();
+		session.update(p);
+		logger.info("AdminProfile updated successfully, AdminProfile Details="+p);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<AdminProfile> listAdminProfiles() {
+		Session session = this.sessionFactory.getCurrentSession();
+		List<AdminProfile> adminProfilesList = session.createQuery("from AdminProfile").list();
+		for(AdminProfile p : adminProfilesList){
+			logger.info("AdminProfile List::"+p);
+		}
+		return adminProfilesList;
+	}
+
+	@Override
+	public AdminProfile getAdminProfileById(int id) {
+		Session session = this.sessionFactory.getCurrentSession();		
+		AdminProfile p = (AdminProfile) session.load(AdminProfile.class, new Integer(id));
+		logger.info("AdminProfile loaded successfully, AdminProfile details="+p);
+		return p;
+	}
+
+	@Override
+	public void removeAdminProfile(int id) {
+		Session session = this.sessionFactory.getCurrentSession();
+		AdminProfile p = (AdminProfile) session.load(AdminProfile.class, new Integer(id));
+		if(null != p){
+			session.delete(p);
+		}
+		logger.info("AdminProfile deleted successfully, adminProfile details="+p);
+	}
+
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean validateAdminProfile(AdminProfile p)
+	{
+		Session session = this.sessionFactory.getCurrentSession();
+		List<AdminProfile> adminProfilesList = session.createQuery("from AdminProfile").list();
+		
+	
+	//	System.out.println("AdminProfile DAO Impl doesn't exist");
+		return false;
+	}
+	
+	@Override
+	public int getAdminProfileCount(int id)
+	{
+		Session session = this.sessionFactory.getCurrentSession();
+		String hql = "select count(*) from AdminProfile where adminProfileId="+String.valueOf(id);
+		int count = ((Long) session.createQuery(hql).uniqueResult()).intValue();
+		return count;
+	}
+	
+	@Override
+	public boolean isContactInfoSet(int id)
+	{
+		Session session = this.sessionFactory.getCurrentSession();
+		String hql = "select count(adminProfileId) from ContactInfo where adminProfileId="+String.valueOf(id);
+		int count = ((Long) session.createQuery(hql).uniqueResult()).intValue();
+
+		if(count>0)
+			return true;
+		else
+			return false;
+			
+	}
+	
+	@Override
+	public User getUserById(int id) {
+		Session session = this.sessionFactory.getCurrentSession();		
+		User p = (User) session.load(User.class, new Integer(id));
+		logger.info("User loaded successfully, User details="+p);
+		return p;
+	}	
+
+	@Override
+	public void updateUser(User p) {
+		Session session = this.sessionFactory.getCurrentSession();
+		session.update(p);
+		logger.info("User updated successfully, User Details="+p);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<String> getExpiredEmails()
+	{
+		Session session = this.sessionFactory.getCurrentSession();
+		Date d1=new Date();
+		Date d=DateUtils.addYears(d1, -1);
+		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
+		String DateToStr = format.format(d);
+		
+		
+	System.out.println("DateToStr in DAO"+DateToStr);
+			List<Integer> userIdList = session.createQuery("select userId from User where loginTime < '" + DateToStr + "'").list() ;
+			//	String date = String.valueOf(d);
+				List<String> emailAddrList=new ArrayList<String>();
+				
+				
+				for(int i : userIdList)
+				{
+					String hql="select emailAddr from ContactInfo where userId="+String.valueOf(i);
+					String tempEmail = ((String) session.createQuery(hql).uniqueResult());
+					emailAddrList.add(tempEmail);
+					User u = getUserById(i);
+					u.setExpiryMailSent(true);
+					u.setExpiryEmailSentDate(d1);
+					Date d2=DateUtils.addDays(d1, 2);
+					u.setExpiresOnDate(d2);
+					updateUser(u);
+				}
+				
+		return emailAddrList;
+		
+		//System.out.println("In expiry DAI " + prevYear);
+		
+	
+		
+	}
+	
+	@Override
+	public void removeUser(int id) {
+		Session session = this.sessionFactory.getCurrentSession();
+		User p = (User) session.load(User.class, new Integer(id));
+		if(null != p){
+			session.delete(p);
+		}
+		logger.info("User deleted successfully, user details="+p);
+	}
+	
+	@Override
+	public void removePet(int id) {
+
+		Session session = this.sessionFactory.getCurrentSession();
+		Pet p = (Pet) session.load(Pet.class, new Integer(id));
+		if(null != p){
+			
+			session.delete(p);
+	
+		}
+		logger.info("Pet deleted successfully, pet details="+p);
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public void deleteExpiredProfiles()
+	{
+		Session session = this.sessionFactory.getCurrentSession();
+		
+		List <Integer> userIdList = 
+				(session.createQuery("select userId from User where expiryEmailSent=1")).list();
+	
+		for(int i:userIdList)
+		{
+			List <Date> dates = 
+					(session.createQuery("select loginTime, expiresOnDate, expiryEmailSentDate from User where expiryEmailSent=1")).list();
+			Date d=new Date();
+			if(d.after(dates.get(1)))
+			{
+				if(dates.get(0).before(dates.get(2)))
+				{
+					System.out.println("Deleting user with id"+i);
+					//removeUser(i);
+					
+					//session.createQuery("delete from Pet where userId="+String.value(i));
+					
+				   //session.createQuery("delete from ContactInfo where userId="+String.value(i));
+					
+					
+					
+					
+				//	removeUser(i);
+					
+				}
+				else
+				{
+					User u=getUserById(i);
+					u.setExpiresOnDate(null);
+					u.setExpiryEmailSentDate(null);
+					u.setExpiryEmailSent(false);
+				}
+			}
+			
+		}
+		
+			
+		
+	}
+}

@@ -1,0 +1,19 @@
+package spring.dao;
+import java.text.ParseException;
+import java.util.List;
+
+import spring.model.AdminProfile;
+
+public interface AdminProfileDAO {
+	
+	public boolean addAdminProfile(AdminProfile p);
+	public void updateAdminProfile(AdminProfile p);
+	public List<AdminProfile> listAdminProfiles();
+	public AdminProfile getAdminProfileById(int id);
+	public void removeAdminProfile(int id);
+	public boolean validateAdminProfile(AdminProfile p);
+	public int getAdminProfileCount(int id);
+	public boolean isContactInfoSet(int id);
+	public List<String> getExpiredEmails();
+	public void deleteExpiredProfiles();
+}

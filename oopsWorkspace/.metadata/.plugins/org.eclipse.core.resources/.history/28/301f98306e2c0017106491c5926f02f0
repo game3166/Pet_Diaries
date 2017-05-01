@@ -1,0 +1,222 @@
+package spring.controllers;
+
+import java.util.List;
+import java.util.Properties;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import spring.model.ContactInfo;
+import spring.model.User;
+import spring.service.UserService;
+import spring.service.ContactInfoService;
+import javax.mail.*;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+import javax.activation.*;
+
+@Controller
+public class ContactInfoController {
+	
+	private ContactInfoService contactInfoService;
+	
+	@Autowired(required=true)
+	//@Qualifier(value="contactInfoService")
+	public void setContactInfoService(ContactInfoService ps){
+		this.contactInfoService = ps;
+	}
+		
+	@RequestMapping(value = "/user/contactInfo", method = RequestMethod.GET)
+	public String listContactInfo(Model model,@RequestParam("userId") int userId
+			) {
+	
+		System.out.println("In listContactInfo");
+		model.addAttribute("userId",userId);
+		model.addAttribute("addContactInfo",true);
+		model.addAttribute("contactInfo", new ContactInfo());
+		List<ContactInfo> list=this.contactInfoService.listContactInfos();
+		model.addAttribute("listContactInfo",list );
+		
+		return "contactInfo";
+	}
+	
+	//For add and update contactInfo both
+	@RequestMapping(value= "/user/contactInfo/add")
+	public String addContactInfo(Model model, @ModelAttribute("contactInfo") ContactInfo p)
+	{
+		System.out.println("IN add contact info");
+		boolean error=false;
+		if(p.getId()>0)
+			model.addAttribute("editContactInfo",true);
+		else
+		model.addAttribute("addContactInfo",true);
+	
+		//if(p.getId() == 0){
+			//new contactInfo, add it
+		
+		if(p.getEmailAddr()=="")
+    	{
+    		model.addAttribute("invalidInput","Error: Email Address cannot be empty");
+    		error=true;
+    	}
+		if(p.getZipcode()=="")
+    	{
+    		model.addAttribute("invalidInput","Error: Zipcode cannot be empty");
+    		error=true;
+    	}
+		if(p.getPhoneNumber()=="")
+    	{
+    		model.addAttribute("invalidInput","Error: Phone number cannot be empty");
+    		error=true;
+    	}
+		if(p.getState()=="")
+    	{
+    		model.addAttribute("invalidInput","Error: State cannot be empty");
+    		error=true;
+    	}	
+		if(p.getCity()=="")
+    	{
+    		model.addAttribute("invalidInput","Error: City cannot be empty");
+    		error=true;
+    	}
+		if(p.getStreet()=="")
+    	{
+    		model.addAttribute("invalidInput","Error: Street cannot be empty");
+    		error=true;
+    	}	
+		
+		System.out.println("In add"+p.getId()+" "+p.getCity());
+    	if(!error)
+    	{
+    		
+    			if(p.getId()>0)
+    			{
+    				this.contactInfoService.updateContactInfo(p);
+    			}
+    			else
+    			{
+
+	    			error=this.contactInfoService.addContactInfo(p);
+	    			
+    			}
+    			model.addAttribute("addContactInfo",false);
+    			model.addAttribute("editContactInfo",false);
+    			model.addAttribute("listContactInfo", this.contactInfoService.listContactInfos());
+    	}
+    		
+ 
+    	
+			return "contactInfo";
+			
+	}
+
+	@RequestMapping("/user/contactInfo/remove")
+    public String removeContactInfo(
+    		Model model,
+    		@ModelAttribute("contactInfo") ContactInfo p,
+    		RedirectAttributes ra){
+		
+		
+		System.out.println("ContactInfo delete");
+	//	model.addAttribute("addContactInfo",true);
+        this.contactInfoService.removeContactInfo(p.getId());
+        ra.addAttribute("userId",p.getUserId());
+        return "redirect:/user/contactInfo";
+    }
+	
+  
+	@RequestMapping(value="/user/contactInfo/edit")
+	public String editContactInfo(
+   
+    		Model model,
+    		@ModelAttribute("contactInfo") ContactInfo p)
+	    	{
+    		
+	    		System.out.println("IN edit contact info"+p.getEmailAddr());
+	    	
+	    
+	    		model.addAttribute("addContactInfo", false);
+		        model.addAttribute("editContactInfo", true);
+		        model.addAttribute("id", p.getId());
+		        model.addAttribute("userId", p.getUserId());
+		        model.addAttribute("street", p.getStreet());
+		    
+		        model.addAttribute("city", p.getCity());
+		        model.addAttribute("state", p.getState());
+		        model.addAttribute("phoneNumber", p.getPhoneNumber());
+		        model.addAttribute("zipcode", p.getZipcode());
+		        model.addAttribute("emailAddr", p.getEmailAddr());
+	    		
+		        return "contactInfo";
+	    	}
+
+	 @RequestMapping(value = "/user/recoverUsernamePassword", method = RequestMethod.POST)
+	    public String forgotUsernamePassword(Model model) {
+	    	model.addAttribute("user",new ContactInfo());
+	       return "recover";
+	    }
+	    
+	    @RequestMapping(value= "/user/recover", method = RequestMethod.POST)
+	   	public String recoverUsernamePassword(Model model, @ModelAttribute("user") ContactInfo c){
+	    		
+	    		//check if email address is there in database
+	    		boolean isAvailable=this.contactInfoService.isRecoveryEmailAddrAvailable(c);
+	    		if(isAvailable)
+	    		{
+	    			//send email out
+	    			
+	    			System.out.println("in recovery Available");
+	    			String username=this.contactInfoService.getUsernameWithUserId(c.getUserId());
+	    			
+	    			String emailContent="Hello,\nYour username is "+username+".\nClick"
+	    					+ "the following link to reset your password\nThank You!\nPet Diaries Team";
+	    			Properties props = new Properties();
+	    			props.put("mail.smtp.host", "smtp.gmail.com");
+	    			props.put("mail.smtp.socketFactory.port", "465");
+	    			props.put("mail.smtp.socketFactory.class",
+	    					"javax.net.ssl.SSLSocketFactory");
+	    			props.put("mail.smtp.auth", "true");
+	    			props.put("mail.smtp.port", "465");
+	    			
+	    			
+
+	    			Session session = Session.getDefaultInstance(props,
+	    				new javax.mail.Authenticator() {
+	    					protected PasswordAuthentication getPasswordAuthentication() {
+	    						return new PasswordAuthentication("temppetdiaries","petpetpet!!!");
+	    					}
+	    				});
+
+	    			try {
+
+	    				Message message = new MimeMessage(session);
+	    				message.setFrom(new InternetAddress("from@no-spam.com"));
+	    				message.setRecipients(Message.RecipientType.TO,
+	    						InternetAddress.parse(c.getEmailAddr()));
+	    				message.setSubject("Account Recovery");
+	    				message.setText("Your username is");
+
+	    				Transport.send(message);
+
+	    				System.out.println("Done");
+
+	    			} catch (MessagingException e) {
+	    				throw new RuntimeException(e);
+	    			}
+	    		   }
+	    		
+	    		
+	    		model.addAttribute("emailSent",true);
+	    		return "recover";
+	       	
+	    }
+	   	
+
+}

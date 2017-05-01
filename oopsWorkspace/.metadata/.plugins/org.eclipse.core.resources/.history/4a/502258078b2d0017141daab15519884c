@@ -1,0 +1,241 @@
+package spring.dao;
+import java.util.Date;
+import java.util.ArrayList;
+import java.security.Timestamp;
+import java.text.SimpleDateFormat;
+import java.util.List;
+
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import spring.model.User;
+import spring.model.Request;
+import spring.model.ResetToken;
+
+@Repository
+public class UserDAOImpl implements UserDAO {
+	
+	private static final Logger logger = LoggerFactory.getLogger(UserDAOImpl.class);
+
+	private SessionFactory sessionFactory;
+	
+	public void setSessionFactory(SessionFactory sf){
+		this.sessionFactory = sf;
+	}
+
+	@Override
+	public boolean addUser(User p) {
+		boolean error=false;
+		Session session = this.sessionFactory.getCurrentSession();
+		try
+		{	
+			
+			session.save(p);
+			//tx.commit();
+			System.out.println("User DAO Impl Added user without exceptions");
+		}
+		catch(Exception e)
+		{
+			session.clear();
+			System.out.println(e.getCause());
+			error=true;
+		}
+		
+		return error;
+		
+	//	logger.info("User saved successfully, User Details="+p);
+	}
+
+	@Override
+	public void updateUser(User p) {
+		Session session = this.sessionFactory.getCurrentSession();
+		session.update(p);
+		logger.info("User updated successfully, User Details="+p);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<User> listUsers() {
+		Session session = this.sessionFactory.getCurrentSession();
+		List<User> usersList = session.createQuery("from User").list();
+		for(User p : usersList){
+			logger.info("User List::"+p);
+		}
+		return usersList;
+	}
+
+	@Override
+	public User getUserById(int id) {
+		Session session = this.sessionFactory.getCurrentSession();		
+		User p = (User) session.load(User.class, new Integer(id));
+		logger.info("User loaded successfully, User details="+p);
+		return p;
+	}
+
+	
+	@Override
+	public void removeUser(int id) {
+		Session session = this.sessionFactory.getCurrentSession();
+		User p = (User) session.load(User.class, new Integer(id));
+		if(null != p){
+			session.delete(p);
+		}
+		logger.info("User deleted successfully, user details="+p);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean validateUser(User p)
+	{
+		Session session = this.sessionFactory.getCurrentSession();
+		List<User> usersList = session.createQuery("from User").list();
+		
+		for(User p1 : usersList){
+			
+		//	System.out.println("p.getname"+p.getName()+" p1.getname"+p1.getName()+" p.getCountry"+p.getCountry() + " p1.getCountry" +p1.getCountry());
+			
+			if((p1.getUsername().equals(p.getUsername())) && 
+					(p1.getPassword().equals(p.getPassword())))
+			{
+			//	System.out.println("User DAO Impl gotcha");
+				System.out.println("User Type is" + p1.getUserType());
+				p.setUserType(p1.getUserType());
+				p.setUserId(p1.getUserId());
+				p.setFirstName(p1.getFirstName());
+				p.setUsername(p1.getUsername());
+				return true;
+			}
+			if((p1.getUsername().equals(p.getUsername())))
+			{
+					System.out.println("In User DAO, password set");
+					p.setUserId(p1.getUserId());
+					p.setError("Password");
+					break;
+			}
+			
+		
+		}
+		
+	//	System.out.println("User DAO Impl doesn't exist");
+		return false;
+	}
+	
+	@Override
+	public int getPetCount(int id)
+	{
+		Session session = this.sessionFactory.getCurrentSession();
+		String hql = "select count(*) from Pet where userId="+String.valueOf(id);
+		int count = ((Long) session.createQuery(hql).uniqueResult()).intValue();
+		return count;
+	}
+	
+	@Override
+	public boolean isContactInfoSet(int id)
+	{
+		Session session = this.sessionFactory.getCurrentSession();
+		String hql = "select count(userId) from ContactInfo where userId="+String.valueOf(id);
+		int count = ((Long) session.createQuery(hql).uniqueResult()).intValue();
+
+		if(count>0)
+			return true;
+		else
+			return false;
+			
+	}
+	
+	@Override
+	public void logInvalidAttempt(User p)
+	{
+		Session session = this.sessionFactory.getCurrentSession();
+		
+		String hql = "select invalidLoginAttempts from User where userId="+ String.valueOf(p.getUserId());
+		int count = ((Integer) session.createQuery(hql).uniqueResult()).intValue();
+		count++;
+		p.setInvalidLoginAttempts(count);
+		session.update(p);
+	}
+	
+	@Override
+	public void createInitialTokenEntry(ResetToken resetToken) {
+		
+		Session session = this.sessionFactory.getCurrentSession();
+		session.save(resetToken);
+		
+	
+	}
+	
+	@Override
+	public int getUserId(String username) {
+		
+		Session session = this.sessionFactory.getCurrentSession();
+		String hql = "select userId from User where username='"+ username+"'";
+		int userId = ((Integer) session.createQuery(hql).uniqueResult()).intValue();
+		return userId;
+	
+	}
+	
+
+	@Override
+	public int resetTokenId(String username) {
+		Session session = this.sessionFactory.getCurrentSession();
+		String hql = "select id from ResetToken where username='"+username+"'";
+		
+		int id = ((Integer) session.createQuery(hql).uniqueResult());
+		
+		return id;
+
+	}
+
+	@Override
+	public String getResetToken(String username) {
+		Session session = this.sessionFactory.getCurrentSession();
+		String hql = "select token from ResetToken where username='"+username+"'";
+		
+		String token = ((String) session.createQuery(hql).uniqueResult());
+		
+		return token;
+
+	}
+	
+	@Override
+	public Date getExpiryDate(String username) {
+		Session session = this.sessionFactory.getCurrentSession();
+		String hql = "select expiryTime from ResetToken where username='"+username+"'";
+		
+		Date date = ((Date) session.createQuery(hql).uniqueResult());
+		
+		return date;
+
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<User> listCaretakers(int userId)
+	{
+		Session session = this.sessionFactory.getCurrentSession();
+		String hql = "select caretakerId from History where ownerId="+String.valueOf(userId);
+		List<Integer> caretakerIdList=  session.createQuery(hql).list();
+		List<User> ul=new ArrayList<User>();
+		for(int i:caretakerIdList)
+		{
+			User u=getUserById(i);
+			ul.add(u);
+		}
+		return ul;
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<Request> listMatchingRequests(Request r)
+	{
+		
+	}
+	
+	
+}

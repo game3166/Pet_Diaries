@@ -1,0 +1,58 @@
+package spring.service;
+
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import spring.dao.UserDAO;
+import spring.model.User;
+
+@Service
+public class UserServiceImpl implements UserService {
+	
+	private UserDAO userDAO;
+
+	public void setUserDAO(UserDAO userDAO) {
+		this.userDAO = userDAO;
+	}
+
+	@Override
+	@Transactional
+	public boolean addUser(User p, Pet pet1) {
+		boolean error=false;
+		error=this.userDAO.addUser(p);
+		return error;
+	}
+
+	@Override
+	@Transactional
+	public void updateUser(User p) {
+		this.userDAO.updateUser(p);
+	}
+
+	@Override
+	@Transactional
+	public List<User> listUsers() {
+		return this.userDAO.listUsers();
+	}
+
+	@Override
+	@Transactional
+	public boolean validateUser(User p)
+	{
+		return this.userDAO.validateUser(p);
+	}
+	@Override
+	@Transactional
+	public User getUserById(int id) {
+		return this.userDAO.getUserById(id);
+	}
+
+	@Override
+	@Transactional
+	public void removeUser(int id) {
+		this.userDAO.removeUser(id);
+	}
+
+}

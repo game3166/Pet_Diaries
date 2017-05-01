@@ -1,0 +1,57 @@
+package spring.service;
+
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import spring.dao.ContactInfoDAO;
+import spring.model.ContactInfo;
+
+@Service
+public class ContactInfoServiceImpl implements ContactInfoService {
+	
+	private ContactInfoDAO contactInfoDAO;
+
+	public void setContactInfoDAO(ContactInfoDAO contactInfoDAO) {
+		this.contactInfoDAO = contactInfoDAO;
+	}
+
+	@Override
+	@Transactional
+	public boolean addContactInfo(ContactInfo p) {
+		boolean error=false;
+		error=this.contactInfoDAO.addContactInfo(p);
+		return error;
+	}
+
+	@Override
+	@Transactional
+	public void updateContactInfo(ContactInfo p) {
+		this.contactInfoDAO.updateContactInfo(p);
+	}
+
+	@Override
+	@Transactional
+	public List<ContactInfo> listContactInfos() {
+		return this.contactInfoDAO.listContactInfos();
+	}
+
+	@Override
+	@Transactional
+	public ContactInfo getContactInfoById(int id) {
+		return this.contactInfoDAO.getContactInfoById(id);
+	}
+
+	@Override
+	@Transactional
+	public void removeContactInfo(int id) {
+		this.contactInfoDAO.removeContactInfo(id);
+	}
+	
+	@Override
+	@Transactional
+	public void removeContactInfo(int id) {
+		this.contactInfoDAO.removeContactInfo(id);
+	}
+}

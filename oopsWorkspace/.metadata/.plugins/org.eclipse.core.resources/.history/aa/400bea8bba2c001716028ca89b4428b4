@@ -1,0 +1,299 @@
+package spring.controllers;
+
+
+import java.util.Date;
+
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import spring.model.Profile;
+import spring.service.ProfileFactoryService;
+
+@Controller
+public class ProfileFactoryController {
+	
+	private ProfileFactoryService profileFactoryService;
+	
+	@Autowired(required=true)
+	//@Qualifier(value="profileFactoryService")
+	public void setProfileFactoryService(ProfileFactoryService ps){
+		System.out.println("In profileFactory controller");
+		this.profileFactoryService = ps;
+	}
+		
+	@RequestMapping(value = "/profileFactorys", method = RequestMethod.GET)
+	public String listProfileFactorys(Model model) {
+		System.out.println("In listProfileFactorys");
+		model.addAttribute("profileFactory", new ProfileFactory());
+		model.addAttribute("listProfileFactorys", this.profileFactoryService.listProfileFactorys());
+		return "profileFactory";
+	}
+	
+
+	//For add and update profileFactory both
+	@RequestMapping(value= "/profileFactory/add", method = RequestMethod.POST)
+	public String addProfileFactory(@ModelAttribute("profileFactory") ProfileFactory p)
+	{
+		
+		boolean error=false;
+		System.out.println("In addProfileFactorys"+p.getProfileFactoryname() +" "+ p.getPassword());
+		//if(p.getId() == 0){
+			//new profileFactory, add it
+			error=this.profileFactoryService.addProfileFactory(p);
+			
+			if(error)
+			{
+				return "invalid-profileFactoryname";
+			}
+			else
+			{
+				return "register-success";
+			}
+		//}else{
+			//existing profileFactory, call update
+			//this.profileFactoryService.updateProfileFactory(p);
+		//}
+		
+	}
+	
+	@RequestMapping("/remove/{profileFactoryId}")
+    public String removeProfileFactory(@PathVariable("profileFactoryId") int id){
+		
+        this.profileFactoryService.removeProfileFactory(id);
+        return "redirect:/profileFactorys";
+    }
+ 
+    @RequestMapping("/edit/{profileFactoryId}")
+    public String editProfileFactory(@PathVariable("profileFactoryId") int id, Model model){
+        model.addAttribute("profileFactory", this.profileFactoryService.getProfileFactoryById(id));
+        model.addAttribute("listProfileFactorys", this.profileFactoryService.listProfileFactorys());
+        return "profileFactory";
+    }
+    
+    @RequestMapping(value = "/redirect", method = RequestMethod.GET)
+    public String redirect() {
+       return "redirect:signUp";
+    }
+   
+    
+    @RequestMapping(value = "/signUp", method = RequestMethod.GET)
+    public String finalPage(@ModelAttribute("profileFactory") ProfileFactory p) {
+       return "signup";
+    }
+    
+    @RequestMapping(value = "/login", method = RequestMethod.GET)
+    public String login() {
+       return "redirect:profileFactorys";
+    }
+    
+    @RequestMapping(value = "/profileFactory/goToLogin", method = RequestMethod.GET)
+    public String goToLogin(@ModelAttribute("profileFactory") ProfileFactory u) {
+    	
+       return "profileFactory";
+    }
+    
+    @RequestMapping(value= "/profileFactory/login", method = RequestMethod.POST)
+	public String loginProfileFactory(Model model, @ModelAttribute("profileFactory") ProfileFactory p){
+    	
+   // 	System.out.println("in login");
+    	boolean retVal=this.profileFactoryService.validateProfileFactory(p);
+		int profileFactoryId=0;
+    	if(!retVal)
+    	{
+    	//	System.out.println("Doesn't exist");
+    		if(p.getError().equals("Password"))
+    		{
+    			p=this.profileFactoryService.getProfileFactoryById(p.getProfileFactoryId());
+    			if(p.getInvalidLoginAttempts()==3)
+    				return "redirect:/account-locked";
+    			System.out.println("In ProfileFactory Controller, password set");
+    			this.profileFactoryService.logInvalidAttempt(p);
+    		}
+    		return "redirect:/invalid-login";
+    	}
+    	else
+    	{
+    	//	System.out.println("Exists");
+    		
+    		System.out.println("ProfileFactory Type is" + p.getProfileFactoryType());
+    		profileFactoryId=p.getProfileFactoryId();
+    		model.addAttribute("profileFactoryId",profileFactoryId);
+    		model.addAttribute("profileFactoryname",p.getProfileFactoryname());
+    		model.addAttribute("firstName",p.getFirstName());
+    		p.setLoginTime(new Date());
+    		this.profileFactoryService.updateProfileFactory(p);
+    		if(p.getProfileFactoryType()=="Admin")
+    		{
+    			return "adminDashboard";
+    		}
+    		else if((p.getProfileFactoryType()).equals("Owner"))
+    		{
+    			model.addAttribute("petCount",this.profileFactoryService.getPetCount(profileFactoryId));
+    			model.addAttribute("contactInfo",this.profileFactoryService.isContactInfoSet(profileFactoryId));
+    			return "ownerDashboard";
+    		}
+    		else 
+    		{
+    			
+    			return "caretakerDashboard";
+    		}
+    	}
+		
+	}
+  
+    
+    @RequestMapping(value= "/profileFactory/signup", method = RequestMethod.POST)
+  	public String signupProfileFactory(Model model, @ModelAttribute("profileFactory") ProfileFactory p){
+      	
+     // 	System.out.println("in login");
+    	
+    	if(p.getFirstName()=="" || p.getLastName()=="")
+    	{
+    		model.addAttribute("invalidInput","Error: First and last name cannot be empty");
+    		return "signup";
+    	}
+    	if(p.getProfileFactoryType()=="")
+    	{
+    		model.addAttribute("invalidInput","Error: ProfileFactory role cannot be empty");
+    		return "signup";
+    	}
+    	if(p.getPassword()=="")
+    	{
+    		model.addAttribute("invalidInput","Error: Password cannot be empty");
+    		return "signup";
+    	}
+    	if(p.getProfileFactoryname()=="")
+    	{
+    		model.addAttribute("invalidInput","Error: profileFactoryname cannot be empty");
+    		return "signup";
+    	}
+      	boolean retVal=this.profileFactoryService.addProfileFactory(p);
+  		
+      	
+      	if(retVal)
+      	{
+      		model.addAttribute("invalidInput","Error: ProfileFactoryname exists");
+      		return "signup";
+      	}
+      	else
+      	{
+      	//	System.out.println("Exists");
+      		int profileFactoryId=	this.profileFactoryService.getProfileFactoryId(p.getProfileFactoryname());
+      		ResetToken r=new ResetToken();
+      		r.setProfileFactoryId(profileFactoryId);
+      		r.setProfileFactoryname(p.getProfileFactoryname());
+      		r.setToken(null);
+      		r.setExpiryTime(null);
+      		
+      		this.profileFactoryService.createInitialTokenEntry(r);
+      		return "redirect:/register-success";
+      	}
+  		
+  	}
+     
+    @RequestMapping(value = "/register-success", method = RequestMethod.GET)
+    public String registeredSuccessfully() {
+       return "registerSuccess";
+    }
+    
+    
+    @RequestMapping(value = "/account-locked", method = RequestMethod.GET)
+    public String displayAccountLockoutError() {
+       return "accountLocked";
+    }
+    
+    @RequestMapping(value = "/invalid-login", method = RequestMethod.GET)
+    public String displayLoginError() {
+       return "loginError";
+    }
+    
+    @RequestMapping(value= "/profileFactory/dash", method = RequestMethod.POST)
+   	public String displayDashboard(Model model, 
+   			@ModelAttribute("pet") ProfileFactory u1,
+   			@ModelAttribute("contactInfo") ProfileFactory u2){
+    		ProfileFactory u=null;
+      // 	System.out.println("in login");
+    		if(u1.getProfileFactoryId()>0)
+    			u = this.profileFactoryService.getProfileFactoryById(u1.getProfileFactoryId());
+    		else if(u2.getProfileFactoryId()>0)
+    			u = this.profileFactoryService.getProfileFactoryById(u2.getProfileFactoryId());
+       	//	System.out.println("Exists");
+       		System.out.println("ProfileFactory Type is" + u1.getProfileFactoryType());
+       		
+  
+       		int profileFactoryId=u.getProfileFactoryId();
+       		model.addAttribute("profileFactoryId",profileFactoryId);
+       		model.addAttribute("profileFactoryname",u.getProfileFactoryname());
+       		model.addAttribute("firstName",u.getFirstName());
+
+       		if(u.getProfileFactoryType()=="Admin")
+       		{
+       			return "adminDashboard";
+       		}
+       		else if((u.getProfileFactoryType()).equals("Owner"))
+       		{
+       			model.addAttribute("petCount",this.profileFactoryService.getPetCount(profileFactoryId));
+       			model.addAttribute("contactInfo",this.profileFactoryService.isContactInfoSet(profileFactoryId));
+       			return "ownerDashboard";
+       		}
+       		else 
+       		{
+       			
+       			return "caretakerDashboard";
+       		}
+       	}
+    
+	@RequestMapping(value = "/passwordReset/{tokenId}/{profileFactoryname}", method = RequestMethod.GET)
+	public String resetPassword(Model model,
+			@PathVariable("tokenId") String tokenId,
+			@PathVariable("profileFactoryname") String profileFactoryname) {
+		System.out.println("In reset profileFactory");
+		
+		int profileFactoryId=this.profileFactoryService.getProfileFactoryId(profileFactoryname);
+		String token=this.profileFactoryService.getResetToken(profileFactoryname);
+		Date tokenExpiryTime=this.profileFactoryService.getExpiryDate(profileFactoryname);
+		ProfileFactory u1=this.profileFactoryService.getProfileFactoryById(profileFactoryId);
+		
+		System.out.println(profileFactoryId + " token="+token + " time="+tokenExpiryTime);
+		Date currentTime=new Date();
+		if(tokenId.equals(token))
+		{
+			if(currentTime.before(tokenExpiryTime))
+			{
+				model.addAttribute("profileFactory",u1);
+				model.addAttribute("success",false);
+				return "passwordRecoveryPage";
+			}
+		}
+		
+		return "invalidRecoveryLink";
+	}
+	
+	@RequestMapping(value = "/profileFactory/updatePassword", method = RequestMethod.POST)
+	public String updatePassword(Model model, @ModelAttribute("profileFactory") ProfileFactory u) {
+		System.out.println("In update password");
+		
+		ProfileFactory temp1=this.profileFactoryService.getProfileFactoryById(u.getProfileFactoryId());
+		Date d=temp1.getLoginTime();
+		
+		u.setLoginTime(d);
+		u.setAccountLocked(false);
+		u.setError(null);
+		u.setInvalidLoginAttempts(0);
+		
+		this.profileFactoryService.updateProfileFactory(u);
+		
+		model.addAttribute("success",true);
+		return "passwordRecoveryPage";
+	}
+	
+	
+}
