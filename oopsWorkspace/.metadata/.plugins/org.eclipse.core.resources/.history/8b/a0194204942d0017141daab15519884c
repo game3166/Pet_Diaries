@@ -1,0 +1,114 @@
+package spring.model;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+//import spring.model.Person;
+
+@Entity
+@Table(name="Request")
+public class Request {
+	
+   @Id
+   @Column(name="id")
+   @GeneratedValue(strategy=GenerationType.IDENTITY)
+   protected int requestId;
+   protected int ownerId;
+   protected String ownerFirstName;
+   protected String ownerLastName;
+   protected int caretakerId;
+   protected String petName;
+   protected String petType;
+   protected String petBreed;
+   protected String fromDate;
+   protected String toDate;
+   protected int hours;
+   protected String feedback;
+   protected boolean validRequest;
+   protected int requestState;
+   
+   
+	public String getPetName() {
+		return petName;
+	}
+
+	public void setPetName(String name) {
+		this.petName = name;
+	}
+	
+	public String getPetType() {
+		return petType;
+	}
+
+	public void setPetType(String type) {
+		this.petType = type;
+	}
+	
+	public String getPetBreed() {
+		return petBreed;
+	}
+
+	public void setPetBreed(String breed) {
+		this.petBreed = breed;
+	}
+	
+	public String getFromDate() {
+		return fromDate;
+	}
+
+	public void setFromDate(String date1) {
+		this.fromDate = date1;
+	}
+	
+	public String getToDate() {
+		return toDate;
+	}   
+
+	public void setToDate(String date2) {
+		this.toDate = date2;
+	}
+	
+	public int getRequestId() {
+		return requestId;
+	}
+
+	public void setRequestId(int id) {
+		this.requestId = id;
+	}
+	
+	public int getOwnerId() {
+		return ownerId;
+	}
+
+	public void setOwnerId(int id) {
+		this.ownerId = id;
+	}
+
+	public String getFeedback() {
+		return feedback;
+	}
+
+	public void setFeedback(String fb) {
+		this.feedback = fb;  
+	}
+	
+	public boolean getValidRequest() {
+		return validRequest;
+	}
+
+	public void setValidRequest(boolean isvalid) {
+		this.validRequest = isvalid;
+	}
+	
+	public int getRequestState() {
+		return requestState;
+	}
+
+	public void setRequestState(int state) {
+		this.requestState = state;
+	}
+
+}

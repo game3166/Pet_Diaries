@@ -1,0 +1,136 @@
+package spring.dao;
+
+import java.util.List;
+
+import org.hibernate.Query;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import spring.model.Owner;
+
+@Repository
+public class OwnerDAOImpl implements OwnerDAO {
+	
+	private static final Logger logger = LoggerFactory.getLogger(OwnerDAOImpl.class);
+
+	private SessionFactory sessionFactory;
+	
+	public void setSessionFactory(SessionFactory sf){
+		this.sessionFactory = sf;
+	}
+
+	@Override
+	public boolean addOwner(Owner p) {
+		boolean error=false;
+		Session session = this.sessionFactory.getCurrentSession();
+		
+		try
+		{
+			session.save(p);
+			//tx.commit();
+			System.out.println("Owner DAO Impl Added ownerProfile without exceptions");
+		}
+		catch(Exception e)
+		{
+			session.clear();
+			System.out.println(e.getCause());
+			error=true;
+		}
+		
+		return error;
+		
+	//	logger.info("Owner saved successfully, Owner Details="+p);
+	}
+
+	@Override
+	public void updateOwner(Owner p) {
+		Session session = this.sessionFactory.getCurrentSession();
+		session.update(p);
+		logger.info("Owner updated successfully, Owner Details="+p);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<Owner> listOwners() {
+		Session session = this.sessionFactory.getCurrentSession();
+		List<Owner> ownerProfilesList = session.createQuery("from Owner").list();
+		for(Owner p : ownerProfilesList){
+			logger.info("Owner List::"+p);
+		}
+		return ownerProfilesList;
+	}
+
+	@Override
+	public Owner getOwnerById(int id) {
+		Session session = this.sessionFactory.getCurrentSession();		
+		Owner p = (Owner) session.load(Owner.class, new Integer(id));
+		logger.info("Owner loaded successfully, Owner details="+p);
+		return p;
+	}
+
+	@Override
+	public void removeOwner(int id) {
+		Session session = this.sessionFactory.getCurrentSession();
+		Owner p = (Owner) session.load(Owner.class, new Integer(id));
+		if(null != p){
+			session.delete(p);
+		}
+		logger.info("Owner deleted successfully, ownerProfile details="+p);
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean validateOwner(Owner p)
+	{
+		Session session = this.sessionFactory.getCurrentSession();
+		List<Owner> ownerProfilesList = session.createQuery("from Owner").list();
+		
+		for(Owner p1 : ownerProfilesList){
+			
+		//	System.out.println("p.getname"+p.getName()+" p1.getname"+p1.getName()+" p.getCountry"+p.getCountry() + " p1.getCountry" +p1.getCountry());
+			
+			
+			{
+			//	System.out.println("Owner DAO Impl gotcha");
+				System.out.println("Owner Type is" + p1.getOwnerType());
+				p.setOwnerType(p1.getOwnerType());
+				p.setOwnerId(p1.getOwnerId());
+				
+				return true;
+			}
+		}
+	//	System.out.println("Owner DAO Impl doesn't exist");
+		return false;
+	}
+	
+	@Override
+	public int getOwnerCount(int id)
+	{
+		Session session = this.sessionFactory.getCurrentSession();
+		String hql = "select count(*) from Owner where ownerProfileId="+String.valueOf(id);
+		int count = ((Long) session.createQuery(hql).uniqueResult()).intValue();
+		return count;
+	}
+	
+	@Override
+	public boolean isContactInfoSet(int id)
+	{
+		Session session = this.sessionFactory.getCurrentSession();
+		String hql = "select count(ownerProfileId) from ContactInfo where ownerProfileId="+String.valueOf(id);
+		int count = ((Long) session.createQuery(hql).uniqueResult()).intValue();
+
+		if(count>0)
+			return true;
+		else
+			return false;
+			
+	}
+	
+	
+	
+}

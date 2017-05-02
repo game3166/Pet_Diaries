@@ -1,0 +1,57 @@
+package spring.model;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+@Entity
+@Table(name="DB1.PET")
+public class Pet {
+	
+
+
+	@Column(name="userId")
+	private int userId;
+	
+	private String petName;
+	
+	private int petId;
+	
+	private String petType;
+	
+	private String petBreed;
+	
+	public int getOwnerId() {
+		return userId;
+	}
+
+	public void setOwnerId(int id) {
+		this.userId = id;
+	}
+	
+	public int getPetId() {
+		return petId;
+	}
+
+	public void setPetId(int id) {
+		this.petId = id;
+	}
+
+	public String getPetType() {
+		return petType;
+	}
+
+	public void setPetType(String type) {
+		this.petType = type;
+	}
+
+	public String getPetName() {
+		return petName;
+	}
+
+	public void setPetName(String petName) {
+		this.petName = petName;
+	}
+
+}

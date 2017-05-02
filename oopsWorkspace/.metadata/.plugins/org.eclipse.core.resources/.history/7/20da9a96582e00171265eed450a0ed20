@@ -1,0 +1,80 @@
+package spring.service;
+
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import spring.dao.OwnerProfileDAO;
+import spring.model.OwnerProfile;
+import spring.model.User;
+
+@Service
+public class OwnerProfileServiceImpl implements OwnerProfileService {
+	
+	private OwnerProfileDAO ownerProfileDAO;
+
+	public void setOwnerProfileDAO(OwnerProfileDAO ownerProfileDAO) {
+		this.ownerProfileDAO = ownerProfileDAO;
+	}
+
+	@Override
+	@Transactional
+	public boolean addOwnerProfile(OwnerProfile p) {
+		boolean error=false;
+		error=this.ownerProfileDAO.addOwnerProfile(p);
+		return error;
+	}
+
+	@Override
+	@Transactional
+	public void updateOwnerProfile(OwnerProfile p) {
+		this.ownerProfileDAO.updateOwnerProfile(p);
+	}
+
+	@Override
+	@Transactional
+	public List<OwnerProfile> listOwnerProfiles() {
+		return this.ownerProfileDAO.listOwnerProfiles();
+	}
+
+	@Override
+	@Transactional
+	public boolean validateOwnerProfile(OwnerProfile p)
+	{
+		return this.ownerProfileDAO.validateOwnerProfile(p);
+	}
+	@Override
+	@Transactional
+	public OwnerProfile getOwnerProfileById(int id) {
+		return this.ownerProfileDAO.getOwnerProfileById(id);
+	}
+
+	@Override
+	@Transactional
+	public void removeOwnerProfile(int id) {
+		this.ownerProfileDAO.removeOwnerProfile(id);
+	}
+	
+	@Override
+	@Transactional
+	public int getOwnerProfileCount(int id)
+	{
+		return this.ownerProfileDAO.getOwnerProfileCount(id);
+	}
+	
+	@Override
+	@Transactional
+	public boolean isContactInfoSet(int id)
+	{
+		return this.ownerProfileDAO.isContactInfoSet(id);
+	}
+
+	
+	@Override
+	@Transactional
+	public List<User> listCaretakers(int userId)
+	{
+		return this.ownerProfileDAO.isContactInfoSet(userId);
+	}
+}

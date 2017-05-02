@@ -1,0 +1,340 @@
+package spring.controllers;
+
+
+import java.util.Date;
+
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import spring.model.CaretakerProfile;
+import spring.model.Pet;
+import spring.model.ResetToken;
+import spring.service.ProfileFactoryService;
+import spring.service.CaretakerProfileService;
+import java.util.List;
+@Controller
+public class CaretakerProfileController {
+	
+	private CaretakerProfileService caretakerProfileService;
+	private ProfileFactoryService profileFactoryService;
+	
+	@Autowired(required=true)
+	//@Qualifier(value="caretakerProfileService")
+	public void setCaretakerProfileService(CaretakerProfileService ps){
+		System.out.println("In caretakerProfile controller");
+		this.caretakerProfileService = ps;
+	}
+	
+	@Autowired(required=true)
+	//@Qualifier(value="caretakerProfileService")
+	public void setProfileFactoryService(ProfileFactoryService ps){
+		System.out.println("In profile factory service setup");
+		this.profileFactoryService = ps;
+	}
+		
+	@RequestMapping(value = "/caretakerProfiles", method = RequestMethod.GET)
+	public String listCaretakerProfiles(Model model) {
+		System.out.println("In listCaretakerProfiles");
+		model.addAttribute("caretakerProfile", new CaretakerProfile());
+		model.addAttribute("listCaretakerProfiles", this.caretakerProfileService.listCaretakerProfiles());
+		return "caretakerProfile";
+	}
+	
+
+	//For add and update caretakerProfile both
+	@RequestMapping(value= "/caretakerProfile/add", method = RequestMethod.POST)
+	public String addCaretakerProfile(@ModelAttribute("caretakerProfile") CaretakerProfile p)
+	{
+		
+		boolean error=false;
+		System.out.println("In addCaretakerProfiles"+p.getCaretakerProfilename() +" "+ p.getPassword());
+		//if(p.getId() == 0){
+			//new caretakerProfile, add it
+			error=this.caretakerProfileService.addCaretakerProfile(p);
+			
+			if(error)
+			{
+				return "invalid-caretakerProfilename";
+			}
+			else
+			{
+				return "register-success";
+			}
+		//}else{
+			//existing caretakerProfile, call update
+			//this.caretakerProfileService.updateCaretakerProfile(p);
+		//}
+		
+	}
+	
+	@RequestMapping("/remove/{caretakerProfileId}")
+    public String removeCaretakerProfile(@PathVariable("caretakerProfileId") int id){
+		
+        this.caretakerProfileService.removeCaretakerProfile(id);
+        return "redirect:/caretakerProfiles";
+    }
+ 
+    @RequestMapping("/edit/{caretakerProfileId}")
+    public String editCaretakerProfile(@PathVariable("caretakerProfileId") int id, Model model){
+        model.addAttribute("caretakerProfile", this.caretakerProfileService.getCaretakerProfileById(id));
+        model.addAttribute("listCaretakerProfiles", this.caretakerProfileService.listCaretakerProfiles());
+        return "caretakerProfile";
+    }
+    
+    @RequestMapping(value = "/redirect", method = RequestMethod.GET)
+    public String redirect() {
+       return "redirect:signUp";
+    }
+   
+    
+    @RequestMapping(value = "/signUp", method = RequestMethod.GET)
+    public String finalPage(@ModelAttribute("caretakerProfile") CaretakerProfile p) {
+       return "signup";
+    }
+    
+    @RequestMapping(value = "/login", method = RequestMethod.GET)
+    public String login() {
+       return "redirect:caretakerProfiles";
+    }
+    
+    @RequestMapping(value = "/caretakerProfile/goToLogin", method = RequestMethod.GET)
+    public String goToLogin(@ModelAttribute("caretakerProfile") CaretakerProfile u) {
+    	
+       return "caretakerProfile";
+    }
+    
+    @RequestMapping(value= "/caretakerProfile/login", method = RequestMethod.POST)
+	public String loginCaretakerProfile(Model model, @ModelAttribute("caretakerProfile") CaretakerProfile p){
+    	
+   // 	System.out.println("in login");
+    	boolean retVal=this.caretakerProfileService.validateCaretakerProfile(p);
+		int caretakerProfileId=0;
+    	if(!retVal)
+    	{
+    	//	System.out.println("Doesn't exist");
+    		if(p.getError().equals("Password"))
+    		{
+    			p=this.caretakerProfileService.getCaretakerProfileById(p.getCaretakerProfileId());
+    			if(p.getInvalidLoginAttempts()==3)
+    				return "redirect:/account-locked";
+    			System.out.println("In CaretakerProfile Controller, password set");
+    			this.caretakerProfileService.logInvalidAttempt(p);
+    		}
+    		return "redirect:/invalid-login";
+    	}
+    	else
+    	{
+    	//	System.out.println("Exists");
+    		
+    		System.out.println("CaretakerProfile Type is" + p.getCaretakerProfileType());
+    		caretakerProfileId=p.getCaretakerProfileId();
+    		model.addAttribute("caretakerProfileId",caretakerProfileId);
+    		model.addAttribute("caretakerProfilename",p.getCaretakerProfilename());
+    		model.addAttribute("firstName",p.getFirstName());
+    		p.setLoginTime(new Date());
+    		this.caretakerProfileService.updateCaretakerProfile(p);
+    		if(p.getCaretakerProfileType()=="Admin")
+    		{
+    			return "adminDashboard";
+    		}
+    		else if((p.getCaretakerProfileType()).equals("Owner"))
+    		{
+    			model.addAttribute("petCount",this.caretakerProfileService.getPetCount(caretakerProfileId));
+    			model.addAttribute("contactInfo",this.caretakerProfileService.isContactInfoSet(caretakerProfileId));
+    			return "ownerDashboard";
+    		}
+    		else 
+    		{
+    			
+    			return "caretakerDashboard";
+    		}
+    	}
+		
+	}
+  
+    
+    @RequestMapping(value= "/caretakerProfile/signup", method = RequestMethod.POST)
+  	public String signupCaretakerProfile(Model model, @ModelAttribute("caretakerProfile") CaretakerProfile p){
+      	
+     // 	System.out.println("in login");
+    	
+    	if(p.getFirstName()=="" || p.getLastName()=="")
+    	{
+    		model.addAttribute("invalidInput","Error: First and last name cannot be empty");
+    		return "signup";
+    	}
+    	if(p.getCaretakerProfileType()=="")
+    	{
+    		model.addAttribute("invalidInput","Error: CaretakerProfile role cannot be empty");
+    		return "signup";
+    	}
+    	if(p.getPassword()=="")
+    	{
+    		model.addAttribute("invalidInput","Error: Password cannot be empty");
+    		return "signup";
+    	}
+    	if(p.getCaretakerProfilename()=="")
+    	{
+    		model.addAttribute("invalidInput","Error: caretakerProfilename cannot be empty");
+    		return "signup";
+    	}
+      	boolean retVal=this.caretakerProfileService.addCaretakerProfile(p);
+  		
+      	
+      	if(retVal)
+      	{
+      		model.addAttribute("invalidInput","Error: CaretakerProfilename exists");
+      		return "signup";
+      	}
+      	else
+      	{
+      	//	System.out.println("Exists");
+      		int caretakerProfileId=	this.caretakerProfileService.getCaretakerProfileId(p.getCaretakerProfilename());
+      		ResetToken r=new ResetToken();
+      		r.setCaretakerProfileId(caretakerProfileId);
+      		r.setCaretakerProfilename(p.getCaretakerProfilename());
+      		r.setToken(null);
+      		r.setExpiryTime(null);
+      		
+      		this.caretakerProfileService.createInitialTokenEntry(r);
+      		return "redirect:/register-success";
+      	}
+  		
+  	}
+     
+    @RequestMapping(value = "/register-success", method = RequestMethod.GET)
+    public String registeredSuccessfully() {
+       return "registerSuccess";
+    }
+    
+    
+    @RequestMapping(value = "/account-locked", method = RequestMethod.GET)
+    public String displayAccountLockoutError() {
+       return "accountLocked";
+    }
+    
+    @RequestMapping(value = "/invalid-login", method = RequestMethod.GET)
+    public String displayLoginError() {
+       return "loginError";
+    }
+    
+    @RequestMapping(value= "/caretakerProfile/dash", method = RequestMethod.POST)
+   	public String displayDashboard(Model model, 
+   			@ModelAttribute("pet") CaretakerProfile u1,
+   			@ModelAttribute("contactInfo") CaretakerProfile u2){
+    		CaretakerProfile u=null;
+      // 	System.out.println("in login");
+    		if(u1.getCaretakerProfileId()>0)
+    			u = this.caretakerProfileService.getCaretakerProfileById(u1.getCaretakerProfileId());
+    		else if(u2.getCaretakerProfileId()>0)
+    			u = this.caretakerProfileService.getCaretakerProfileById(u2.getCaretakerProfileId());
+       	//	System.out.println("Exists");
+       		System.out.println("CaretakerProfile Type is" + u1.getCaretakerProfileType());
+       		
+  
+       		int caretakerProfileId=u.getCaretakerProfileId();
+       		model.addAttribute("caretakerProfileId",caretakerProfileId);
+       		model.addAttribute("caretakerProfilename",u.getCaretakerProfilename());
+       		model.addAttribute("firstName",u.getFirstName());
+
+       		if(u.getCaretakerProfileType()=="Admin")
+       		{
+       			return "adminDashboard";
+       		}
+       		else if((u.getCaretakerProfileType()).equals("Owner"))
+       		{
+       			model.addAttribute("petCount",this.caretakerProfileService.getPetCount(caretakerProfileId));
+       			model.addAttribute("contactInfo",this.caretakerProfileService.isContactInfoSet(caretakerProfileId));
+       			return "ownerDashboard";
+       		}
+       		else 
+       		{
+       			
+       			return "caretakerDashboard";
+       		}
+       	}
+    
+	@RequestMapping(value = "/passwordReset/{tokenId}/{caretakerProfilename}", method = RequestMethod.GET)
+	public String resetPassword(Model model,
+			@PathVariable("tokenId") String tokenId,
+			@PathVariable("caretakerProfilename") String caretakerProfilename) {
+		System.out.println("In reset caretakerProfile");
+		
+		int caretakerProfileId=this.caretakerProfileService.getCaretakerProfileId(caretakerProfilename);
+		String token=this.caretakerProfileService.getResetToken(caretakerProfilename);
+		Date tokenExpiryTime=this.caretakerProfileService.getExpiryDate(caretakerProfilename);
+		CaretakerProfile u1=this.caretakerProfileService.getCaretakerProfileById(caretakerProfileId);
+		
+		System.out.println(caretakerProfileId + " token="+token + " time="+tokenExpiryTime);
+		Date currentTime=new Date();
+		if(tokenId.equals(token))
+		{
+			if(currentTime.before(tokenExpiryTime))
+			{
+				model.addAttribute("caretakerProfile",u1);
+				model.addAttribute("success",false);
+				return "passwordRecoveryPage";
+			}
+		}
+		
+		return "invalidRecoveryLink";
+	}
+	
+	@RequestMapping(value = "/caretakerProfile/updatePassword", method = RequestMethod.POST)
+	public String updatePassword(Model model, @ModelAttribute("caretakerProfile") CaretakerProfile u) {
+		System.out.println("In update password");
+		
+		CaretakerProfile temp1=this.caretakerProfileService.getCaretakerProfileById(u.getCaretakerProfileId());
+		Date d=temp1.getLoginTime();
+		
+		u.setLoginTime(d);
+		u.setAccountLocked(false);
+		u.setError(null);
+		u.setInvalidLoginAttempts(0);
+		
+		this.caretakerProfileService.updateCaretakerProfile(u);
+		
+		model.addAttribute("success",true);
+		return "passwordRecoveryPage";
+	}
+	
+	@RequestMapping(value = "/caretakerProfile/suggestedCaretakers", method = RequestMethod.GET)
+	public String listPets(Model model,@RequestParam("caretakerProfileId") int caretakerProfileId) {
+	
+		System.out.println("In suggested caretakers");
+		model.addAttribute("caretakerProfileId",caretakerProfileId);
+		model.addAttribute("caretakerProfile",new CaretakerProfile());
+		model.addAttribute("listCaretakers", this.caretakerProfileService.listCaretakers(caretakerProfileId));
+
+		return "suggestedCaretakers";
+	}
+	
+	@RequestMapping(value = "/caretakerProfile/listCaretakers", method = RequestMethod.POST)
+	public String listCaretakers(Model model,
+			@ModelAttribute("caretakerProfile") CaretakerProfile p,
+			@RequestParam("caretakerProfileId") int caretakerProfileId,
+			@RequestParam("caretakerProfilename") String caretakerProfilename,
+			@RequestParam("caretakerProfileType") String caretakerProfileType
+			) {
+	
+		System.out.println("In list caretakers ");
+		model.addAttribute("caretakerProfileId",caretakerProfileId);
+
+		model.addAttribute("listCaretakers", this.caretakerProfileService.listCaretakers(caretakerProfileId));
+
+		/*FActory pattern comes here*/
+		return "suggestedCaretakers";
+	}
+	
+	
+	
+}

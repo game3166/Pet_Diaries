@@ -1,0 +1,173 @@
+package spring.controllers;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+
+
+import spring.model.Request;
+import spring.service.AdminProfileService;
+
+@Controller
+public class AdminProfileController {
+	
+	private AdminProfileService AdminProfileService;
+	
+	@Autowired(required=true)
+	//@Qualifier(value="AdminProfileService")
+	public void setAdminProfileService(AdminProfileService ps){
+		System.out.println("In caretaker profile");
+		this.AdminProfileService = ps;
+	}
+	
+	@RequestMapping(value = "/user/viewProfile")
+	public String createRequest(@ModelAttribute("request") Request r, Model model) {
+		System.out.println("Here it is......");
+		
+	
+	   // return "redirect:/request";
+		return "profile";
+	}
+	
+	@RequestMapping(value = "/admin/sendExpiryEmail")
+	public String createRequest(@ModelAttribute("request") Request r, Model model) {
+		System.out.println("Here it is......");
+		
+	
+	   // return "redirect:/request";
+		return "profile";
+	}
+	
+	//@PathVariable("Name") String name,
+	/*@RequestMapping(value = "/user/pet", method = RequestMethod.GET)
+	public String listAdminProfiles(Model model) {
+		System.out.println("In listAdminProfiles");
+		model.addAttribute("AdminProfile", new AdminProfile());
+	//	model.addAttribute("listAdminProfiles", this.AdminProfileService.listAdminProfiles());
+		return "pet";
+	}*/
+	
+	//For add and update AdminProfile both
+	/*@RequestMapping(value= "/AdminProfile/add", method = RequestMethod.POST)
+	public String addAdminProfile(@ModelAttribute("AdminProfile") AdminProfile p)
+	{
+		
+		boolean error=false;
+		
+		//if(p.getId() == 0){
+			//new AdminProfile, add it
+			error=this.AdminProfileService.addAdminProfile(p);
+			
+			if(error)
+			{
+				return "invalid-AdminProfilename";
+			}
+			else
+			{
+				return "register-success";
+			}
+		//}else{
+			//existing AdminProfile, call update
+			//this.AdminProfileService.updateAdminProfile(p);
+		//}
+		
+	}
+	
+	@RequestMapping("/remove/{AdminProfileId}")
+    public String removeAdminProfile(@PathVariable("AdminProfileId") int id){
+		
+        this.AdminProfileService.removeAdminProfile(id);
+        return "redirect:/AdminProfiles";
+    }
+ 
+    @RequestMapping("/edit/{AdminProfileId}")
+    public String editAdminProfile(@PathVariable("AdminProfileId") int id, Model model){
+        model.addAttribute("AdminProfile", this.AdminProfileService.getAdminProfileById(id));
+        model.addAttribute("listAdminProfiles", this.AdminProfileService.listAdminProfiles());
+        return "AdminProfile";
+    }
+    
+  
+    @RequestMapping(value = "/login", method = RequestMethod.GET)
+    public String login() {
+       return "redirect:AdminProfiles";
+    }
+    
+    @RequestMapping(value= "/AdminProfile/login", method = RequestMethod.POST)
+	public String loginAdminProfile(Model model, @ModelAttribute("AdminProfile") AdminProfile p){
+    	
+   // 	System.out.println("in login");
+    	boolean retVal=this.AdminProfileService.validateAdminProfile(p);
+		int AdminProfileId=0;
+    	if(!retVal)
+    	{
+    	//	System.out.println("Doesn't exist");
+    		return "redirect:/invalid-login";
+    	}
+    	else
+    	{
+    	//	System.out.println("Exists");
+    		System.out.println("AdminProfile Type is" + p.getAdminProfileType());
+    		AdminProfileId=p.getAdminProfileId();
+    		model.addAttribute("AdminProfileId",AdminProfileId);
+    		model.addAttribute("AdminProfilename",p.getAdminProfilename());
+    		model.addAttribute("firstName",p.getFirstName());
+
+    		if(p.getAdminProfileType()=="Admin")
+    		{
+    			return "adminDashboard";
+    		}
+    		else if((p.getAdminProfileType()).equals("caretaker"))
+    		{
+    			model.addAttribute("AdminProfileCount",this.AdminProfileService.getAdminProfileCount(AdminProfileId));
+    			model.addAttribute("contactInfo",this.AdminProfileService.isContactInfoSet(AdminProfileId));
+    			return "caretakerDashboard";
+    		}
+    		else 
+    		{
+    			
+    			return "caretakerDashboard";
+    		}
+    	}
+		
+	}
+    
+    @RequestMapping(value= "/AdminProfile/signup", method = RequestMethod.POST)
+  	public String signupAdminProfile(Model model, @ModelAttribute("AdminProfile") AdminProfile p){
+      	
+     // 	System.out.println("in login");
+    	if(p.getAdminProfileType()=="")
+    	{
+    		model.addAttribute("invalidInput","Error: AdminProfile role cannot be empty");
+    		return "signup";
+    	}
+    	if(p.getAdminProfileName()=="")
+    	{
+    		model.addAttribute("invalidInput","Error: AdminProfilename cannot be empty");
+    		return "signup";
+    	}
+      	boolean retVal=this.AdminProfileService.addAdminProfile(p);
+  		
+      	if(retVal)
+      	{
+      		model.addAttribute("invalidInput","Error: AdminProfilename exists");
+      		return "signup";
+      	}
+      	else
+      	{
+      	//	System.out.println("Exists");
+      		return "register-success";
+      	}
+  		
+  	}
+      
+    
+    @RequestMapping(value = "/invalid-login", method = RequestMethod.GET)
+    public String dispLoginError() {
+       return "loginError";
+    }*/
+}
